@@ -2,13 +2,23 @@ from __future__ import annotations
 import numbers
 import time
 from functools import wraps
-from typing import Sequence
+from typing import Sequence, List, Callable
 
 import numpy as np
 from PIL import Image
 
 x1, x2, y1, y2 = -1.8, 1.8, -1.8, 1.8
 c_real, c_imag = -0.62772, -0.42193
+if "line_profiler" not in dir() and "profile" not in dir():
+    def profile(func: Callable):
+        return func
+
+
+def main() -> None:
+    max_iterations: int = 300
+    desired_width: float = 1000.0
+    output: Sequence[int] = calc_pure_python(desired_width=desired_width, max_iterations=max_iterations)
+    plot_julia_set(output, int(desired_width), max_iterations)
 
 
 def timefn(fn):
@@ -22,7 +32,8 @@ def timefn(fn):
     return measure_time
 
 
-def calc_pure_python(desired_width: numbers.Real, max_iterations: numbers.Integral) -> None:
+# @profile
+def calc_pure_python(desired_width: numbers.Real, max_iterations: numbers.Integral) -> Sequence[int]:
     """
     Create a list of complex coordinates (zx) and complex parameters(cs),
     build Julia set
@@ -32,8 +43,8 @@ def calc_pure_python(desired_width: numbers.Real, max_iterations: numbers.Integr
     """
     x_step: float = (x2 - x1) / desired_width
     y_step: float = (y1 - y2) / desired_width
-    x: list[float] = list()
-    y: list[float] = list()
+    x: List[float] = list()
+    y: List[float] = list()
 
     ycoord: float = y2
     while ycoord > y1:
@@ -44,8 +55,8 @@ def calc_pure_python(desired_width: numbers.Real, max_iterations: numbers.Integr
         x.append(xcoord)
         xcoord += x_step
 
-    zs: list[complex] = list()
-    cs: list[complex] = list()
+    zs: List[complex] = list()
+    cs: List[complex] = list()
     for ycoord in y:
         for xcoord in x:
             zs.append(complex(xcoord, ycoord))
@@ -61,11 +72,12 @@ def calc_pure_python(desired_width: numbers.Real, max_iterations: numbers.Integr
 
     assert sum(output) == 33219980
 
-    plot_julia_set(output, int(desired_width), max_iterations)
+    return output
 
 
 @timefn
-def calculate_z_serial_purepython(maxiter: numbers.Integral, zs: list[complex], cs: list[complex]) -> Sequence[int]:
+@profile
+def calculate_z_serial_purepython(maxiter: numbers.Integral, zs: List[complex], cs: List[complex]) -> Sequence[int]:
     """
     Calculate output list using Julia update rule
     :param maxiter:
@@ -73,12 +85,12 @@ def calculate_z_serial_purepython(maxiter: numbers.Integral, zs: list[complex], 
     :param cs:
     :return:
     """
-    output: list[int] = [0] * len(zs)
+    output: List[int] = [0] * len(zs)
     for i in range(len(zs)):
         n: int = 0
         z: complex = zs[i]
         c: complex = cs[i]
-        while abs(z) < 2 and n < int(maxiter):
+        while n < int(maxiter) and abs(z) < 2:
             z = z * z + c
             n += 1
         output[i] = n
@@ -93,4 +105,4 @@ def plot_julia_set(output: Sequence[int], nrows: int, max_iteration: numbers.Int
 
 
 if __name__ == '__main__':
-    calc_pure_python(desired_width=1000.0, max_iterations=300)
+    main()

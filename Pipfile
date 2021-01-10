@@ -9,6 +9,12 @@ numpy = "*"
 matplotlib = "*"
 
 [dev-packages]
+ipython = "*"
+snakeviz = "*"
+line-profiler = "*"
+psutil = "*"
+memory-profiler = "*"
+py-spy = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.8"
